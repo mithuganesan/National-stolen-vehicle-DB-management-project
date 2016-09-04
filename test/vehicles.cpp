@@ -42,6 +42,6 @@ int main(int, char**) {
     auto db = conn["crossover"];
     
     
-    findentry(db, "owner","Amy");
+    findentry(db, "owner","jimmy");
     
 }   

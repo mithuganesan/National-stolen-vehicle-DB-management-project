@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+
+    <title>National Stolen Vehicle Database</title>
+	<style>
+		body{
+			background:#fff;
+			padding:0 40px;
+		}
+		.header{
+			padding:20px;
+			text-align:center;
+			background:#ddd;
+		}
+		ul {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+		li {
+			padding: 10px;
+			background: #eee;
+			margin: 10px 0;
+		}
+	</style>
+
+	<script type="text/javascript">
+
+		function searchHandler(){
+			var nameObj  = document.getElementById("fieldName");
+			var valueObj = document.getElementById("fieldValue");
+			var name  = nameObj.value || "";
+			var value = valueObj.value || "";
+			if (name == "" || value == "") {
+				document.getElementById("answer").innerHTML = "Please provide proper parameters";
+				return;
+			}
+			getVehiclesData(name, value, responseHandler);
+		}
+		function responseHandler(data){
+			var output = "";
+			if(!data || data == ""){
+				output = "No results found"
+			}
+			else{
+				output += "<ul>"
+				var rootDoc = JSON.parse(data);
+				var jsonArray = rootDoc["results"];
+				for(var i = 0; i < jsonArray.length; i++ ){
+					var jsonObject = jsonArray[i];
+
+					output += "<li>" +
+						"<p> Model: " + jsonObject["model"]  + "</p>" +
+						"<p> Make: "  + jsonObject["make"]   + "</p>" +
+						"<p> Owner: " + jsonObject["owner"]  + "</p>"  
+					+ "</li>" ;
+				}
+				output += "</ul>"
+			}
+
+			document.getElementById("answer").innerHTML = output;
+		}
+		function getVehiclesData(name, value, callback) {
+			var xhttp;    
+			
+			xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+				if (this.readyState == 4 && this.status == 200) {
+					callback(this.responseText); //async callback
+				}
+			};
+			xhttp.open("GET", "find/"+ name + "/" + value, true);
+			xhttp.send();
+		}
+	</script>
+</head>
+<body>
+	<div class="header">
+		<h1>National Stolen Vehicle Database</h1>
+	</div>
+	<div class="querybox">
+		<p>Search By:</p>
+		<select name="fieldName" id="fieldName">
+			<option value="owner">Owner</option>
+			<option value="model">Model</option>
+		</select>
+		<input id="fieldValue" type="text" />
+		<button onclick="searchHandler()">Search</button>
+	</div>
+
+
+	<div class="results">
+		<p>Results:</p>
+		<div id="answer">
+
+		</div>
+	</div>
+</body>
+
+
+</html>

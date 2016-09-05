@@ -29,12 +29,16 @@ void createentry(mongocxx::database db, string name, int price)
 }
 void findentry(mongocxx::database db, string findname, string tofind)
 {
-        auto cursor = db["vehicles"].find(document{}  << findname << tofind
-                                                        << finalize);
-
-        for (auto&& doc : cursor) {
-            std::cout << bsoncxx::to_json(doc) << std::endl;
-        }
+    auto cursor = db["vehicles"].find(document{}  << findname << tofind
+                                                    << finalize);
+    document data_builder{};
+    auto array_builder = data_builder << "results" << open_array;
+    for (auto&& docView : cursor) {
+            array_builder <<  bsoncxx::types::b_document{docView};
+    }
+    array_builder << close_array;
+    bsoncxx::document::value doc = data_builder << finalize;
+    std::cout << bsoncxx::to_json(doc) << std::endl;
 }
 int main(int, char**) {
     mongocxx::instance inst{};
@@ -42,6 +46,6 @@ int main(int, char**) {
     auto db = conn["crossover"];
     
     
-    findentry(db, "owner","jimmy");
+    findentry(db, "model","beta");
     
 }   

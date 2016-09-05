@@ -24,7 +24,12 @@ mongocxx::instance inst{};
 mongocxx::client conn{mongocxx::uri{}};
 auto db = conn["crossover"];
 
-string findVehicle(mongocxx::database db, string fieldName, string fieldValue)
+/*
+* Finds the Stolen Vehicle from the Mongo DB for a given 
+* fieldName and fieldValue {key:value} pair
+* and returns the string in the form of Json object array.
+*/
+string findVehicle(mongocxx::database db, string fieldName, string fieldValue) 
 {
         auto cursor = db["vehicles"].find(document{}  << fieldName << fieldValue
                                                         << finalize);
@@ -40,6 +45,11 @@ string findVehicle(mongocxx::database db, string fieldName, string fieldValue)
         return bsoncxx::to_json(finalDoc);
 }
 
+/*
+* Invokes findVehicle method for the current session and 
+* sends the result to the Web application.
+* (displays the result in the Browser)
+*/
 void findVehicleHandler( const shared_ptr< Session > session )
 {   
     string outputString;
@@ -48,8 +58,11 @@ void findVehicleHandler( const shared_ptr< Session > session )
     outputString = findVehicle(db, request->get_path_parameter( "name" ), request->get_path_parameter( "value" ) );
                  
     session->close(OK, outputString, { { "Content-Length", ::to_string( outputString.size( ) )  },{ "Content-Type", "application/json" } } );
-}                                                                                                                              
+}  
 
+/*
+* Opens the Web page index.html for the current session 
+*/
 void pageOpenHandler( const shared_ptr< Session > session )
 {   
     const auto request = session->get_request( );
@@ -75,6 +88,11 @@ void pageOpenHandler( const shared_ptr< Session > session )
     }
 }
 
+/*
+* Invokes findVehicleHandler method if there is a valid find query
+* and {key:value} pair as parameters. 
+* Otherwise closes the session with error message 
+*/
 void commonHandler( const shared_ptr< Session > session )
 {   
     string resource;
@@ -92,7 +110,11 @@ void commonHandler( const shared_ptr< Session > session )
         session->close(OK, noAPIResp, { { "Content-Length", ::to_string( noAPIResp.size( ) )  }, { "Content-Type", "text/plain" } } );   }                                                    
 }
 
-int main( const int, const char** )
+/*
+* Gets the {key:value} pair from the web application client
+* and invokes the corresponding Handler methods
+*/
+int main( int argc, char* argv[] )
 {   
     auto openResource = make_shared< Resource >( );
     openResource->set_path( "/" );

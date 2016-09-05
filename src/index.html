@@ -45,17 +45,19 @@
 				output = "No results found"
 			}
 			else{
-				output += "<ul>"
+				output += "<p> Result: </p>" + "<ul>"
 				var rootDoc = JSON.parse(data);
 				var jsonArray = rootDoc["results"];
 				for(var i = 0; i < jsonArray.length; i++ ){
 					var jsonObject = jsonArray[i];
 
 					output += "<li>" +
-						"<p> Model: " + jsonObject["model"]  + "</p>" +
-						"<p> Make: "  + jsonObject["make"]   + "</p>" +
-						"<p> Owner: " + jsonObject["owner"]  + "</p>"  
-					+ "</li>" ;
+						"<p> Owner : " + jsonObject["owner"]  + "</p>"  +
+						"<p> Registration Number : " + jsonObject["registration"]  + "</p>" +
+						"<p> Manufactured Year : "  + jsonObject["year"]   + "</p>" +
+						"<p> Model : " + jsonObject["model"]  + "</p>" +
+						"<p> Make : "  + jsonObject["make"]   + "</p>" +
+						"<p> Stolen Date : "  + jsonObject["stolendate"]   + "</p>" + "</li>" 
 				}
 				output += "</ul>"
 			}
@@ -82,9 +84,13 @@
 	</div>
 	<div class="querybox">
 		<p>Search By:</p>
-		<select name="fieldName" id="fieldName">
+		<select name="fieldName" id="fieldName">Select
 			<option value="owner">Owner</option>
+			<option value="registration">Registration Number</option>
+			<option value="year">Manufactured Year</option>
 			<option value="model">Model</option>
+			<option value="make">Make</option>
+			<option value="stolendate">Stolen Date</option>
 		</select>
 		<input id="fieldValue" type="text" />
 		<button onclick="searchHandler()">Search</button>
@@ -92,7 +98,7 @@
 
 
 	<div class="results">
-		<p>Results:</p>
+		
 		<div id="answer">
 
 		</div>

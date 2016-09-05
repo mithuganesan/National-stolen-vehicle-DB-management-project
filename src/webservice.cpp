@@ -18,12 +18,22 @@ using bsoncxx::builder::stream::open_array;
 using bsoncxx::builder::stream::close_array;
 using bsoncxx::builder::stream::finalize;
 
-
 using namespace std;
 using namespace restbed;
 mongocxx::instance inst{};
 mongocxx::client conn{mongocxx::uri{}};
 auto db = conn["crossover"];
+
+/*
+* Adds the result log for each query to the Mongo DB
+*/ 
+void createDBEntry(mongocxx::database db, bsoncxx::document::value Entry, string fieldName, string fieldValue)
+{   
+    string queryString = " Result for stolen vehicles with " + fieldName +":"+ fieldValue;
+    bsoncxx::document::value logDoc =
+    document{} <<  queryString << bsoncxx::types::b_document{Entry} <<finalize;
+    auto result = db["log"].insert_one(std::move(logDoc));
+}
 
 /*
 * Finds the Stolen Vehicle from the Mongo DB for a given 
@@ -32,18 +42,19 @@ auto db = conn["crossover"];
 */
 string findVehicle(mongocxx::database db, string fieldName, string fieldValue) 
 {
-        auto cursor = db["vehicles"].find(document{}  << fieldName << fieldValue
+    auto cursor = db["vehicles"].find(document{}  << fieldName << fieldValue
                                                         << finalize);
-        document rootDoc{};
-        auto resultsArray = rootDoc << "results" << open_array;
+    document rootDoc{};
+    auto resultsArray = rootDoc << "results" << open_array;
 
-        for (auto&& docView : cursor) {
-            resultsArray <<  bsoncxx::types::b_document{docView};
-        }
+    for (auto&& docView : cursor) {
+        resultsArray <<  bsoncxx::types::b_document{docView};
+    }
 
-        resultsArray << close_array;
-        bsoncxx::document::value finalDoc = rootDoc << finalize;
-        return bsoncxx::to_json(finalDoc);
+    resultsArray << close_array;
+    bsoncxx::document::value finalDoc = rootDoc << finalize;
+    createDBEntry(db, finalDoc, fieldName, fieldValue);
+    return bsoncxx::to_json(finalDoc);
 }
 
 /*

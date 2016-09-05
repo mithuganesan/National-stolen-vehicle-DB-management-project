@@ -1,14 +1,10 @@
 #include <memory>
 #include <cstdlib>
 #include <restbed>
-#include "host_rule.hpp"
-#include "accept_rule.hpp"
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/json.hpp>
 #include <chrono>
-
 #include <bsoncxx/types.hpp>
-
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
 #include <mongocxx/uri.hpp>
@@ -17,8 +13,6 @@
 #include<iostream>
 
 using bsoncxx::builder::stream::document;
-using bsoncxx::builder::stream::open_document;
-using bsoncxx::builder::stream::close_document;
 using bsoncxx::builder::stream::open_array;
 using bsoncxx::builder::stream::close_array;
 using bsoncxx::builder::stream::finalize;
@@ -30,30 +24,33 @@ mongocxx::instance inst{};
 mongocxx::client conn{mongocxx::uri{}};
 auto db = conn["crossover"];
 
-string findentry(mongocxx::database db, string findname, string tofind)
+string findVehicle(mongocxx::database db, string fieldName, string fieldValue)
 {
-        auto cursor = db["vehicles"].find(document{}  << findname << tofind
+        auto cursor = db["vehicles"].find(document{}  << fieldName << fieldValue
                                                         << finalize);
         document rootDoc{};
-        auto results_array = rootDoc << "results" << open_array;
+        auto resultsArray = rootDoc << "results" << open_array;
 
         for (auto&& docView : cursor) {
-            results_array <<  bsoncxx::types::b_document{docView};
+            resultsArray <<  bsoncxx::types::b_document{docView};
         }
-        results_array << close_array;
-        bsoncxx::document::value doc = rootDoc << finalize;
-        return bsoncxx::to_json(doc);
+
+        resultsArray << close_array;
+        bsoncxx::document::value finalDoc = rootDoc << finalize;
+        return bsoncxx::to_json(finalDoc);
 }
 
-void get_find_handler( const shared_ptr< Session > session )
+void findVehicleHandler( const shared_ptr< Session > session )
 {   
-    string docus;
+    string outputString;
     const auto& request = session->get_request( );
-    docus = findentry(db, request->get_path_parameter( "name" ), request->get_path_parameter( "value" ) );
-    session->close(OK, docus, { { "Content-Length", ::to_string( docus.size( ) )  }, { "Content-Type", "application/json" } } );
-}
 
-void get_index_handler( const shared_ptr< Session > session )
+    outputString = findVehicle(db, request->get_path_parameter( "name" ), request->get_path_parameter( "value" ) );
+                 
+    session->close(OK, outputString, { { "Content-Length", ::to_string( outputString.size( ) )  },{ "Content-Type", "application/json" } } );
+}                                                                                                                              
+
+void pageOpenHandler( const shared_ptr< Session > session )
 {   
     const auto request = session->get_request( );
     const string filename = "index.html";
@@ -62,66 +59,56 @@ void get_index_handler( const shared_ptr< Session > session )
     
     if ( stream.is_open( ) )
     {
-        const string body = string( istreambuf_iterator< char >( stream ), istreambuf_iterator< char >( ) );
+        const string htmlPage = string( istreambuf_iterator< char >( stream ), istreambuf_iterator< char >( ) );
         
         const multimap< string, string > headers
         {
             { "Content-Type", "text/html" },
-            { "Content-Length", ::to_string( body.length( ) ) }
+            { "Content-Length", ::to_string( htmlPage.length( ) ) }
         };
         
-        session->close( OK, body, headers );
+        session->close( OK, htmlPage, headers );
     }
     else
     {
         session->close( NOT_FOUND );
     }
 }
-void get_common_handler( const shared_ptr< Session > session )
+
+void commonHandler( const shared_ptr< Session > session )
 {   
     string resource;
     const auto& request = session->get_request( );
     resource = request->get_path_parameter( "res" );
     bool isResource = request->has_path_parameter( "res" );
     
-    if (!isResource)
+    if(isResource && resource == "find")
     {
-        get_index_handler(session); 
-    }
-    else if(isResource && resource == "find")
-    {
-        get_find_handler(session);
+        findVehicleHandler(session);
     }
     else 
     {
         string noAPIResp = "Sorry, please try a valid REST API";
-        session->close(OK, noAPIResp, { { "Content-Length", ::to_string( noAPIResp.size( ) )  }, { "Content-Type", "text/plain" } } );
-    }
+        session->close(OK, noAPIResp, { { "Content-Length", ::to_string( noAPIResp.size( ) )  }, { "Content-Type", "text/plain" } } );   }                                                    
 }
-
 
 int main( const int, const char** )
 {   
-    
-    auto resource = make_shared< Resource >( );
-    resource->set_path( "/{res: .*}/{name: .*}/{value: .*}" );
-    resource->add_rule( make_shared< AcceptRule >( ) );
-    resource->set_method_handler( "GET", get_common_handler );
-    
+    auto openResource = make_shared< Resource >( );
+    openResource->set_path( "/" );
+    openResource->set_method_handler( "GET", pageOpenHandler );
+
+    auto findResource = make_shared< Resource >( );
+    findResource->set_path( "/{res: .*}/{name: .*}/{value: .*}" );
+    findResource->set_method_handler( "GET", commonHandler );
+      
     auto settings = make_shared< Settings >( );
-    settings->set_port( 1984 );
+    settings->set_port( 8080 );
     settings->set_default_header( "Connection", "close" );
-    
-    auto resource1 = make_shared< Resource >( );
-    resource1->set_path( "/" );
-    resource1->add_rule( make_shared< AcceptRule >( ) );
-    resource1->set_method_handler( "GET", get_index_handler );
- 
 
     Service service;
-    service.publish( resource );
-    service.publish( resource1 );
-    service.add_rule( make_shared< HostRule >( ) );
+    service.publish( openResource );
+    service.publish( findResource );
     service.start( settings );
     
     return EXIT_SUCCESS;

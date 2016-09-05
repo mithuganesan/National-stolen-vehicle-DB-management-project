@@ -8,6 +8,7 @@
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
 #include <mongocxx/uri.hpp>
+#include <thread>
 #include <fstream>
 #include <streambuf>
 #include<iostream>
@@ -113,6 +114,7 @@ void commonHandler( const shared_ptr< Session > session )
 /*
 * Gets the {key:value} pair from the web application client
 * and invokes the corresponding Handler methods
+* Multithreaded Service with 4 max threads
 */
 int main( int argc, char* argv[] )
 {   
@@ -126,6 +128,7 @@ int main( int argc, char* argv[] )
       
     auto settings = make_shared< Settings >( );
     settings->set_port( 8080 );
+    settings->set_worker_limit( 4 );
     settings->set_default_header( "Connection", "close" );
 
     Service service;

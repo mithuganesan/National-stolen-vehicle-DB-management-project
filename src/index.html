@@ -34,34 +34,40 @@
 			var name  = nameObj.value || "";
 			var value = valueObj.value || "";
 			if (name == "" || value == "") {
-				document.getElementById("answer").innerHTML = "Please provide proper parameters";
+				document.getElementById("answer").innerHTML = "<p>Please provide proper parameters</p>";
 				return;
 			}
 			getVehiclesData(name, value, responseHandler);
 		}
+
 		function responseHandler(data){
 			var output = "";
 			if(!data || data == ""){
-				output = "No results found"
+				output = "<p>Internal server error</p>"
 			}
 			else{
-				output += "<p> Result: </p>" + "<ul>"
 				var rootDoc = JSON.parse(data);
 				var jsonArray = rootDoc["results"];
-				for(var i = 0; i < jsonArray.length; i++ ){
-					var jsonObject = jsonArray[i];
 
-					output += "<li>" +
-						"<p> Owner : " + jsonObject["owner"]  + "</p>"  +
-						"<p> Registration Number : " + jsonObject["registration"]  + "</p>" +
-						"<p> Manufactured Year : "  + jsonObject["year"]   + "</p>" +
-						"<p> Model : " + jsonObject["model"]  + "</p>" +
-						"<p> Make : "  + jsonObject["make"]   + "</p>" +
-						"<p> Stolen Date : "  + jsonObject["stolendate"]   + "</p>" + "</li>" 
+				if(jsonArray.length <= 0){
+					output = "<p>No results found</p>"
 				}
-				output += "</ul>"
-			}
+				else{
+					output += "<p> Result: </p>" + "<ul>"
+					for(var i = 0; i < jsonArray.length; i++ ){
+						var jsonObject = jsonArray[i];
 
+						output += "<li>" +
+							"<p> Owner : " + jsonObject["owner"]  + "</p>"  +
+							"<p> Registration Number : " + jsonObject["registration"]  + "</p>" +
+							"<p> Manufactured Year : "  + jsonObject["year"]   + "</p>" +
+							"<p> Model : " + jsonObject["model"]  + "</p>" +
+							"<p> Make : "  + jsonObject["make"]   + "</p>" +
+							"<p> Stolen Date : "  + jsonObject["stolendate"]   + "</p>" + "</li>" 
+					}
+					output += "</ul>"
+				}
+			}
 			document.getElementById("answer").innerHTML = output;
 		}
 		function getVehiclesData(name, value, callback) {
@@ -76,6 +82,13 @@
 			xhttp.open("GET", "find/"+ name + "/" + value, true);
 			xhttp.send();
 		}
+
+		function keypressHandler(e){
+			if(e.keyCode === 13){
+				e.preventDefault(); //runs once
+				searchHandler();
+			}
+    	}
 	</script>
 </head>
 <body>
@@ -92,7 +105,7 @@
 			<option value="make">Make</option>
 			<option value="stolendate">Stolen Date</option>
 		</select>
-		<input id="fieldValue" type="text" />
+		<input id="fieldValue" type="text" onkeypress="keypressHandler(event)" />
 		<button onclick="searchHandler()">Search</button>
 	</div>
 

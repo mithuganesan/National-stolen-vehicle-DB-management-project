@@ -1,0 +1,26 @@
+Created a RESTful web service and a web application to search for stolen vehicles.
+
+Tools:
+	OS - Ubuntu Mate 16.04 LTS
+	C++ IDE – Visual studio code
+	DB – Mongo DB
+	REST SDK –  restbed
+	HTML and AJAX for the web application client.
+
+
+Details:
+
+Server:
+====	
+Created a high performance RESTful web service.
+1. "National stolen vehicles database" contains the following information about stolen vehicles on a cloud hosted Mongo DB database.
+Table: Vehicle, Fields: Vehicle_Registration, Vehicle_Make, Vehicle_Model, Vehicle_Owner
+2.Created a RESTful web service that would allow searching for vehicles in this database. The search can be made in all the above data fields.
+3.This service will also log all the searches made into another table named “log” in the same database.
+
+
+Client:
+====
+The web application client is coonected to the above web service and will search for vehicles. It processes the HTML requests using AJAX.
+
+Note:  It is a self-hosted application.
